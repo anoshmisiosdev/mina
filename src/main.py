@@ -56,13 +56,17 @@ def pre_autonomous():
    left_piston.set(1)
    right_piston.set(1)
 controller = Controller()
-vision_6__BRIE = Signature(1, -5735, 1, -2866,-7343, -3633, -5488,1.1, 0)
+vision_6__BRIE = Signature(1, -6739, -4981, -5860,-3855, -1237, -2546,2.5, 0)
 motor1 = Motor(Ports.PORT1, False)  # Front left, direction reversed
 motor2 = Motor(Ports.PORT2, True)  # Front right
 motor3 = Motor(Ports.PORT3, False) # Back left, direction reversed
 motor4 = Motor(Ports.PORT4, True) # Back right
 motor6 = Motor(Ports.PORT5, False)#mid left wheel
 motor7 = Motor(Ports.PORT6, True)#mid right wheel
+left_drive_smart = MotorGroup(motor1, motor3)
+right_drive_smart = MotorGroup(motor2, motor4)
+drivetrain = DriveTrain(left_drive_smart, right_drive_smart, 319.19, 342.9, 304.79999999999995, MM, 1)
+
 motor1.set_velocity(200, PERCENT)
 motor2.set_velocity(200, PERCENT)
 motor3.set_velocity(200, PERCENT)
@@ -83,42 +87,24 @@ wait(1, SECONDS)
 
 
 def autonomous():
-   brain.screen.clear_screen()
-   brain.screen.print("autonomous code")
-   # place automonous code here
-   motor1.spin_for(FORWARD, 1036*2,DEGREES,wait=False)
-   motor2.spin_for(FORWARD, 1036*2,DEGREES,wait=False)
-   motor3.spin_for(FORWARD, 1036*2,DEGREES,wait=False)
-   motor4.spin_for(FORWARD, 1036*2,DEGREES,wait=False)
-   time.sleep(1)
+    brain.screen.clear_screen()
+    brain.screen.print("autonomous code")
+    # place automonous code here
+    homepoint = 0,0
+    goalpoint = 6,0
+    drivetrain.drive_for(FORWARD, 4, INCHES)
+    drivetrain.drive_for(FORWARD, -4, INCHES)
+    drivetrain.turn_for(45, DEGREES)
+    drivetrain.drive_for(FORWARD, 5, INCHES)
+    while True:
+        vision.take_snapshot(1)
+        if vision.largest_object().width > 50:
+            if vision.largest_object().centerX > 160 or vision.largest_object().centerX < 190:
+                x = vision.largest_object().centerX
+                finaltouch = 0.000372882*x**2 - 0.230912*x+35.4519
+                drivetrain.drive_for(finaltouch, INCHES)
+            elif vision.largest_object().centerX < 160:
 
-
-   # part 2
-   x = 0
-   for x in range(16):
-       # make sure that the 2nd block runs AFTER the first block
-       dataset = vision.take_snapshot(1)
-       if dataset is None:
-           motor1.spin(FORWARD, 25, PERCENT)
-           motor2.spin(REVERSE, 25, PERCENT)
-           motor3.spin(FORWARD, 25, PERCENT)
-           motor4.spin(REVERSE, 25, PERCENT)
-           time.sleep(0.5)
-           motor1.stop()
-           motor2.stop()
-           motor3.stop()
-           motor4.stop()
-           continue
-          
-       elif(vision.largest_object().centerX < 200 and vision.largest_object().centerX > 100):
-           brain.screen.print(vision.largest_object().centerX)
-           brain.screen.next_row()
-           motor1.spin(FORWARD, 50, PERCENT)
-           motor2.spin(FORWARD, 50, PERCENT)
-           motor3.spin(FORWARD, 50, PERCENT)
-           motor4.spin(FORWARD, 50, PERCENT)
-       x+=1
-       wait(1, SECONDS)
 
 
 def user_control():
@@ -135,7 +121,7 @@ def user_control():
         # Reading joystick positions
         forward_backward = -1*(controller.axis1.position())  # Forward/Backward from the left joystick
         turn = controller.axis3.position()  # Turning from the right joystick
-            # Apply a deadzone for precision control
+            # Apply a deadzone for precision controls
         if abs(forward_backward) < 5:
             forward_backward = 0
         if abs(turn) < 5:
