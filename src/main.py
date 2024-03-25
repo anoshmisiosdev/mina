@@ -1,38 +1,3 @@
-#region VEXcode Generated Robot Configuration
-from vex import *
-
-
-# Brain should be defined by default
-brain=Brain()
-
-
-# Robot configuration code
-
-
-
-
-# wait for rotation sensor to fully initialize
-wait(30, MSEC)
-
-
-
-
-def play_vexcode_sound(sound_name):
-   # Helper to make playing sounds from the V5 in VEXcode easier and
-   # keeps the code cleaner by making it clear what is happening.
-   print("VEXPlaySound:" + sound_name)
-   wait(5, MSEC)
-
-
-# add a small delay to make sure we don't print in the middle of the REPL header
-wait(200, MSEC)
-# clear the console to make sure we don't have the REPL in the console
-print("\033[2J")
-
-
-#endregion VEXcode Generated Robot Configuration
-
-
 # ------------------------------------------
 #
 #   Project:
@@ -48,7 +13,7 @@ from vex import *
 
 # Begin project code
 
-
+brain=Brain()
 def pre_autonomous():
    # actions to do when the program starts
    brain.screen.clear_screen()
@@ -74,7 +39,6 @@ motor4.set_velocity(200, PERCENT)
 vision = Vision(Ports.PORT7, 50, vision_6__BRIE)
 left_piston = DigitalOut(brain.three_wire_port.a)  # Adjust port as necessary
 right_piston = DigitalOut(brain.three_wire_port.b)
-   
 
 
 
@@ -90,20 +54,32 @@ def autonomous():
     brain.screen.clear_screen()
     brain.screen.print("autonomous code")
     # place automonous code here
-    homepoint = 0,0
-    goalpoint = 6,0
     drivetrain.drive_for(FORWARD, 4, INCHES)
     drivetrain.drive_for(FORWARD, -4, INCHES)
     drivetrain.turn_for(45, DEGREES)
     drivetrain.drive_for(FORWARD, 5, INCHES)
+    angleamt = 0
     while True:
         vision.take_snapshot(1)
         if vision.largest_object().width > 50:
             if vision.largest_object().centerX > 160 or vision.largest_object().centerX < 190:
                 x = vision.largest_object().centerX
-                finaltouch = 0.000372882*x**2 - 0.230912*x+35.4519
-                drivetrain.drive_for(finaltouch, INCHES)
+                finalinching = 0.000372882*x**2 - 0.230912*x+35.4519
+                drivetrain.drive_for(finalinching, INCHES)
             elif vision.largest_object().centerX < 160:
+                drivetrain.turn_for(15, DEGREES)
+                angleamt = angleamt+15
+                return
+            elif vision.largest_object().centerX > 190:
+                drivetrain.turn_for(-15, DEGREES)
+                angleamt = angleamt-15
+                return
+        if vision.largest_object().height > 190:
+            finalangle = 360-angleamt
+            drivetrain.turn_for(finalangle, DEGREES)
+            drivetrain.drive_for(5, INCHES)
+            drivetrain.drive_for(-5, INCHES)
+            
 
 
 
